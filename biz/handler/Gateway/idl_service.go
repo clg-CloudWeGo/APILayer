@@ -3,13 +3,18 @@
 package Gateway
 
 import (
-	"Gateway/biz/idlmanager"
 	"context"
+	"errors"
+	"sync"
 
 	Gateway "Gateway/biz/model/Gateway"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
+
+var ServiceNameMap = make(map[string]Gateway.ServiceInfo)
+
+var mapMutex = &sync.Mutex{}
 
 // AddService .
 // @router /add [POST]
@@ -24,8 +29,7 @@ func AddService(ctx context.Context, c *app.RequestContext) {
 
 	resp := new(Gateway.SuccessResp)
 
-	//the method to add the service
-	idlmanager.AddService(req)
+	AddNewService(req)
 	resp = &Gateway.SuccessResp{
 		Success: true,
 		Message: "Add " + req.ServiceName + " successfully!!",
@@ -34,77 +38,13 @@ func AddService(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, resp)
 }
 
-// DeleteService .
-// @router /delete [POST]
-func DeleteService(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req Gateway.ServiceReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
+func AddNewService(service Gateway.ServiceInfo) {
+	mapMutex.Lock() // 获取锁定
+	defer mapMutex.Unlock()
+	if _, ok := ServiceNameMap[service.ServiceName]; !ok {
+		ServiceNameMap[service.ServiceName] = service
+	} else {
+		err := errors.New("service" + service.ServiceName + "has been added！")
+		panic(err)
 	}
-
-	resp := new(Gateway.SuccessResp)
-
-	//the method to delete the service
-	idlmanager.DeleteService(req.ServiceName)
-	resp = &Gateway.SuccessResp{
-		Success: true,
-		Message: "Delete " + req.ServiceName + " success",
-	}
-	c.JSON(consts.StatusOK, resp)
-}
-
-// UpdateService .
-// @router /update [POST]
-func UpdateService(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req Gateway.ServiceInfo
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp := new(Gateway.SuccessResp)
-
-	//the method to update the service
-	idlmanager.UpdateService(req)
-	resp = &Gateway.SuccessResp{
-		Success: true,
-		Message: "Update " + req.ServiceName + " success",
-	}
-	c.JSON(consts.StatusOK, resp)
-}
-
-// GetService .
-// @router /get [POST]
-func GetService(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req Gateway.ServiceReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
-	}
-
-	resp := new(Gateway.ServiceInfo)
-	//todo
-	//the method to get the service
-	c.JSON(consts.StatusOK, resp)
-}
-
-// ListService .
-// @router /list [POST]
-func ListService(ctx context.Context, c *app.RequestContext) {
-	var err error
-	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
-		return
-	}
-	resp := idlmanager.GetAllService()
-
-	//the method to show all the service
-	c.JSON(consts.StatusOK, resp)
 }

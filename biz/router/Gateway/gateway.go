@@ -18,8 +18,4 @@ func Register(r *server.Hertz) {
 
 	root := r.Group("/", rootMw()...)
 	root.POST("/add", append(_addserviceMw(), Gateway.AddService)...)
-	root.POST("/delete", append(_deleteserviceMw(), Gateway.DeleteService)...)
-	root.POST("/get", append(_getserviceMw(), Gateway.GetService)...)
-	root.POST("/list", append(_listserviceMw(), Gateway.ListService)...)
-	root.POST("/update", append(_updateserviceMw(), Gateway.UpdateService)...)
 }
