@@ -12,4 +12,5 @@ func customizedRegister(r *server.Hertz) {
 	r.GET("/ping", handler.Ping)
 
 	// your code ...
+	r.POST("/:service/:method", handler.SolveUrl)
 }
